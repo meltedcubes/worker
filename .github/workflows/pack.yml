@@ -1,0 +1,41 @@
+name: Pack EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      download_url:
+        description: 'URL of the EXE to download'
+        required: true
+        type: string
+      output_name:
+        description: 'Output filename'
+        required: true
+        default: 'packed.exe'
+        type: string
+
+jobs:
+  pack:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download target EXE
+        shell: powershell
+        run: |
+          Write-Host "Downloading from: ${{ github.event.inputs.download_url }}"
+          Invoke-WebRequest -Uri "${{ github.event.inputs.download_url }}" -OutFile "input.exe"
+
+      - name: Run Packer
+        shell: cmd
+        run: |
+          echo Running packer...
+          alternate.exe input.exe ${{ github.event.inputs.output_name }} ""
+
+      - name: Upload Packed File
+        uses: actions/upload-artifact@v4
+        with:
+          name: packed-file
+          path: ${{ github.event.inputs.output_name }}
